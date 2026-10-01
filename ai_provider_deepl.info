@@ -1,0 +1,8 @@
+name = AI Provider DeepL
+description = DeepL translation provider for AI core and AI Translate.
+backdrop = 1.x
+type = module
+php = 8.0
+package = AI
+dependencies[] = ai
+dependencies[] = key

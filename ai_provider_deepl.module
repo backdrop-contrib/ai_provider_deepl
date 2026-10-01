@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * @file
+ * DeepL provider for AI core.
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function ai_provider_deepl_autoload_info() {
+  return [
+    'AIDeepLAdapter' => 'includes/AIDeepLAdapter.php',
+  ];
+}
+
+/**
+ * Implements hook_ai_provider_info().
+ */
+function ai_provider_deepl_ai_provider_info() {
+  return [
+    'deepl' => [
+      'label' => t('DeepL'),
+      'description' => t('DeepL neural machine translation service with native HTML tag preservation and high fluency.'),
+      'class' => 'AIDeepLAdapter',
+      'website' => 'https://www.deepl.com/',
+      'key_url' => 'https://www.deepl.com/your-account/keys',
+      'models_url' => 'https://developers.deepl.com/docs/api-reference/translate',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function ai_provider_deepl_config_info() {
+  return [
+    'ai_provider_deepl.settings' => [
+      'label' => t('DeepL Settings'),
+      'group' => t('Configuration'),
+    ],
+  ];
+}
+
+/**
+ * Implements hook_ai_provider_settings_alter().
+ */
+function ai_provider_deepl_ai_provider_settings_alter(&$settings, $context) {
+  if ($context['provider'] !== 'deepl') {
+    return;
+  }
+
+  $config = config('ai_provider_deepl.settings');
+
+  $settings['deepl_endpoint_tier'] = [
+    '#type' => 'radios',
+    '#title' => t('API Account Tier'),
+    '#options' => [
+      'auto' => t('Auto-detect (keys ending with <code>:fx</code> use free endpoint, others use pro)'),
+      'free' => t('DeepL API Free (<code>api-free.deepl.com</code>)'),
+      'pro' => t('DeepL API Pro (<code>api.deepl.com</code>)'),
+    ],
+    '#default_value' => $config->get('endpoint_tier') ?: 'auto',
+    '#description' => t('Select your DeepL API plan type.'),
+    '#weight' => -2,
+  ];
+
+  $settings['deepl_formality'] = [
+    '#type' => 'select',
+    '#title' => t('Default Formality'),
+    '#options' => [
+      'default' => t('Default / Neutral'),
+      'more' => t('Formal / More formal'),
+      'less' => t('Informal / Less formal'),
+      'prefer_more' => t('Prefer formal (fall back to default if unavailable)'),
+      'prefer_less' => t('Prefer informal (fall back to default if unavailable)'),
+    ],
+    '#default_value' => $config->get('formality') ?: 'default',
+    '#description' => t('Desired formality for translations (supported for select languages such as DE, FR, ES, IT, NL, PL, PT, RU, JA).'),
+    '#weight' => -1,
+  ];
+
+  $context['form']['#submit'][] = 'ai_provider_deepl_settings_submit';
+}
+
+/**
+ * Submit handler for DeepL provider settings.
+ */
+function ai_provider_deepl_settings_submit($form, &$form_state) {
+  $config = config('ai_provider_deepl.settings');
+
+  if (isset($form_state['values']['deepl_endpoint_tier'])) {
+    $config->set('endpoint_tier', $form_state['values']['deepl_endpoint_tier']);
+  }
+  if (isset($form_state['values']['deepl_formality'])) {
+    $config->set('formality', $form_state['values']['deepl_formality']);
+  }
+
+  $config->save();
+}

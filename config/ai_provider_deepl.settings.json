@@ -1,0 +1,6 @@
+{
+  "_config_name": "ai_provider_deepl.settings",
+  "endpoint_tier": "auto",
+  "custom_endpoint": "",
+  "formality": "default"
+}
